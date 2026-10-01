@@ -30,9 +30,12 @@
   let thumbCb = null, readyCb = null;
   const thumbs = new Map();
 
+  // endereço completo (o mesmo do import map), pra funcionar mesmo se o navegador ignorar o mapa
+  const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js';
+
   World.load = function (el) {
     canvas = el;
-    import('three')
+    import(THREE_URL)
       .then((mod) => init(mod))
       .catch((e) => console.warn('Não deu pra carregar o 3D — seguindo com o fundo em gradiente.', e));
   };
@@ -399,7 +402,8 @@
       g.strokeStyle = ui.primary;
       g.lineWidth = 16;
       g.beginPath();
-      g.roundRect(16, 160, 480, 192, 48);
+      if (g.roundRect) g.roundRect(16, 160, 480, 192, 48);
+      else g.rect(16, 160, 480, 192); // Safari antigo (iOS < 16)
       g.fill();
       g.stroke();
       g.fillStyle = ui['primary-2'];

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Roleta da Isadora</title>
+  <meta name="theme-color" content="#ff4f87">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="world" aria-hidden="true"></canvas>
+  <div id="world-fade" aria-hidden="true"></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <div class="app">
+    <header class="topbar">
+      <h1 class="title"><span class="title-emoji" id="title-emoji">🎀</span> <span id="title-word">Roleta</span> da <span class="title-name">Isadora</span></h1>
+      <nav class="picker" id="picker" aria-label="Escolher personagem"></nav>
+    </header>
+
+    <main class="stage">
+      <section class="buddy">
+        <div class="bubble" id="bubble">
+          <span class="bubble-ghost" id="bubble-ghost" aria-hidden="true"></span>
+          <span class="bubble-typed" id="bubble-typed" aria-hidden="true"></span>
+        </div>
+        <span class="sr-only" id="sr-say" aria-live="polite"></span>
+        <button class="buddy-char" id="buddy-char" type="button" aria-label="Falar com a personagem"></button>
+        <div class="buddy-name" id="buddy-name"></div>
+        <div class="timers" id="timers" aria-live="off"></div>
+      </section>
+
+      <section class="wheel-area">
+        <div class="wheel-wrap" id="wheel-wrap" tabindex="0" role="button"
+             aria-label="Roleta. Arraste para girar ou aperte Enter.">
+          <div class="wheel-glow"></div>
+          <canvas id="wheel"></canvas>
+          <div class="wheel-pointer" id="wheel-pointer" aria-hidden="true">
+            <svg viewBox="0 0 60 80"><path d="M30 78 L10 34 A22 22 0 1 1 50 34 Z" fill="var(--primary)" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M30 36 C21 30 17 24 21 19 C24 15.5 28.5 16.5 30 20 C31.5 16.5 36 15.5 39 19 C43 24 39 30 30 36Z" fill="#fff"/></svg>
+          </div>
+          <button class="wheel-hub" id="wheel-hub" type="button" aria-label="Girar a roleta"></button>
+        </div>
+        <div class="power" id="power">
+          <span class="power-label">Força</span>
+          <div class="power-bar"><div class="power-fill" id="power-fill"></div></div>
+          <span class="power-text" id="power-text">arraste a roleta!</span>
+        </div>
+      </section>
+
+      <section class="todo-area" id="todo-area" hidden>
+        <div class="todo-card">
+          <div class="todo-head">
+            <h2 id="todo-title">Tarefas</h2>
+            <span class="todo-count" id="todo-count">0/0</span>
+          </div>
+          <div class="todo-progress"><div class="todo-progress-fill" id="todo-progress-fill"></div></div>
+          <form class="add-form" id="todo-form" autocomplete="off">
+            <input id="todo-input" maxlength="60" placeholder="Nova tarefa... ex: Estudar 30 min 📚" aria-label="Nova tarefa">
+            <button class="btn btn-primary" type="submit" id="todo-add-btn">Adicionar</button>
+          </form>
+          <ul class="list todo-list" id="todo-list"></ul>
+          <p class="empty" id="todo-empty" hidden>Nenhuma tarefa ainda... bora criar a primeira! ✨</p>
+          <div class="todo-foot">
+            <button class="btn btn-ghost" id="todo-clear-done" type="button">Limpar concluídas</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="dock">
+      <div class="mode-switch" role="group" aria-label="Modo deste perfil">
+        <button type="button" data-mode="wheel" aria-pressed="true">🎡 <span class="lbl">Roleta</span></button>
+        <button type="button" data-mode="todo" aria-pressed="false">✅ <span class="lbl">Tarefas</span></button>
+      </div>
+      <button class="btn btn-primary" id="open-list" type="button">📝 <span class="lbl">Atividades</span> <span class="count" id="count">0</span></button>
+      <button class="btn btn-round" id="timer-btn" type="button" title="Timer" aria-label="Timer">⏱️</button>
+      <button class="btn btn-round" id="toggle-music" type="button" aria-pressed="true" title="Música" aria-label="Música">🎵</button>
+      <button class="btn btn-round" id="toggle-sfx" type="button" aria-pressed="true" title="Efeitos sonoros" aria-label="Efeitos sonoros">🔔</button>
+      <button class="btn btn-round" id="model-btn" type="button" title="Usar um modelo 3D próprio (.glb) pra esta personagem" aria-label="Usar modelo 3D próprio">🧸</button>
+      <button class="btn btn-round btn-small" id="model-reset" type="button" title="Voltar pro modelo padrão" aria-label="Voltar pro modelo 3D padrão" hidden>↺</button>
+      <input type="file" id="model-file" accept=".glb,model/gltf-binary" hidden>
+    </footer>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Atividades">
+    <div class="drawer-head">
+      <h2>Atividades 💕</h2>
+      <button class="btn-icon" id="close-list" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <form class="add-form" id="add-form" autocomplete="off">
+      <input id="add-input" maxlength="60" placeholder="Nova atividade... ex: Fazer brigadeiro 🍫" aria-label="Nova atividade">
+      <button class="btn btn-primary" type="submit" id="add-btn">Adicionar</button>
+    </form>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty" hidden>Nenhuma atividade ainda... adicione a primeira! ✨</p>
+    <div class="drawer-foot">
+      <button class="btn btn-ghost" id="restore" type="button">Restaurar exemplos</button>
+      <button class="btn btn-ghost" id="clear-all" type="button">Apagar tudo</button>
+    </div>
+  </aside>
+
+  <div class="modal" id="result" role="dialog" aria-modal="true" aria-labelledby="result-title" hidden>
+    <div class="modal-card">
+      <div class="modal-char" id="result-char"></div>
+      <p class="modal-kicker" id="result-kicker">A atividade sorteada é...</p>
+      <h2 class="modal-title" id="result-title"></h2>
+      <p class="modal-sub" id="result-sub"></p>
+      <div class="modal-actions" id="result-actions"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="time-dialog" role="dialog" aria-modal="true" aria-labelledby="time-title" hidden>
+    <div class="modal-card time-card">
+      <h2 class="time-title" id="time-title">Quanto tempo? ⏱️</h2>
+      <p class="modal-sub" id="time-sub"></p>
+      <div class="time-presets" id="time-presets"></div>
+      <form class="time-custom" id="time-form">
+        <input type="number" id="time-input" min="1" max="600" step="1" placeholder="min" aria-label="Minutos">
+        <span>minutos</span>
+        <button class="btn btn-primary" type="submit" id="time-ok">OK</button>
+      </form>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="time-clear" type="button" hidden>Sem tempo</button>
+        <button class="btn btn-ghost" id="time-cancel" type="button">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts clássicos (funciona abrindo o arquivo direto, sem servidor). O Three.js é importado sob demanda pelo world.js -->
+  <script src="js/characters.js" defer></script>
+  <script src="js/audio.js" defer></script>
+  <script src="js/confetti.js" defer></script>
+  <script src="js/wheel.js" defer></script>
+  <script src="js/figures.js" defer></script>
+  <script src="js/world.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>
